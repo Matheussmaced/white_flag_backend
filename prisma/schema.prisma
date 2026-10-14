@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Char(36)
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(180)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  hideNotificationText Boolean @default(false) @map("hide_notification_text")
+  hotModeEnabled       Boolean @default(false) @map("hot_mode_enabled")
+  lastSeenAt           DateTime? @map("last_seen_at")
+  pairCode     String   @unique @map("pair_code") @db.VarChar(16)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  coupleMemberships   CoupleMember[]
+  sentFlags           Flag[]               @relation("FlagSender")
+  receivedFlags       Flag[]               @relation("FlagReceiver")
+  devices             Device[]
+  flagReplies         FlagReply[]
+  diaryEntries        DiaryEntry[]
+  peaceEvents         PeaceEvent[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  userId    String    @map("user_id") @db.Char(36)
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  userId    String    @map("user_id") @db.Char(36)
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+enum CoupleStatus {
+  ACTIVE
+  ENDED
+}
+
+model Couple {
+  id        String       @id @default(uuid()) @db.Char(36)
+  status    CoupleStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  endedAt   DateTime?    @map("ended_at")
+
+  members CoupleMember[]
+  flags   Flag[]
+  peaceEvents PeaceEvent[]
+
+  @@map("couples")
+}
+
+model CoupleMember {
+  id           String   @id @default(uuid()) @db.Char(36)
+  coupleId     String   @map("couple_id") @db.Char(36)
+  userId       String   @map("user_id") @db.Char(36)
+  activeUserId String?  @unique @map("active_user_id") @db.Char(36)
+  joinedAt     DateTime @default(now()) @map("joined_at")
+
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([coupleId, userId])
+  @@index([userId])
+  @@map("couple_members")
+}
+enum ContentMode {
+  NORMAL
+  HOT
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+}
+
+model Feeling {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  label     String      @db.VarChar(120)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  flags Flag[]
+
+  @@map("feelings")
+}
+
+model Flag {
+  id             String    @id @default(uuid()) @db.Char(36)
+  coupleId       String    @map("couple_id") @db.Char(36)
+  senderId       String    @map("sender_id") @db.Char(36)
+  receiverId     String    @map("receiver_id") @db.Char(36)
+  feelingId      String    @map("feeling_id") @db.Char(36)
+  idempotencyKey String    @map("idempotency_key") @db.VarChar(100)
+  seenAt         DateTime? @map("seen_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  couple   Couple  @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  sender   User    @relation("FlagSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User    @relation("FlagReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  feeling  Feeling @relation(fields: [feelingId], references: [id])
+  reply    FlagReply?
+
+  @@unique([senderId, idempotencyKey])
+  @@index([coupleId, createdAt])
+  @@index([receiverId])
+  @@map("flags")
+}
+
+model Device {
+  id        String         @id @default(uuid()) @db.Char(36)
+  userId    String         @map("user_id") @db.Char(36)
+  token     String         @unique @db.VarChar(255)
+  platform  DevicePlatform
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("devices")
+}
+enum FlagReplyType {
+  ACCEPT
+  DECLINE
+}
+
+model DeclineReason {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  label     String      @db.VarChar(160)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  replies FlagReply[]
+
+  @@map("decline_reasons")
+}
+
+model AcceptNote {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  label     String      @db.VarChar(160)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  replies FlagReply[]
+
+  @@map("accept_notes")
+}
+
+model DiceChallenge {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  label     String      @db.VarChar(200)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  @@map("dice_challenges")
+}
+
+model FlagReply {
+  id              String        @id @default(uuid()) @db.Char(36)
+  flagId          String        @unique @map("flag_id") @db.Char(36)
+  responderId     String        @map("responder_id") @db.Char(36)
+  type            FlagReplyType
+  declineReasonId String?       @map("decline_reason_id") @db.Char(36)
+  acceptNoteId    String?       @map("accept_note_id") @db.Char(36)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  flag          Flag           @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  responder     User           @relation(fields: [responderId], references: [id], onDelete: Cascade)
+  declineReason DeclineReason? @relation(fields: [declineReasonId], references: [id])
+  acceptNote    AcceptNote?    @relation(fields: [acceptNoteId], references: [id])
+
+  @@index([responderId])
+  @@map("flag_replies")
+}
+model DiaryEntry {
+  id             String   @id @default(uuid()) @db.Char(36)
+  userId         String   @map("user_id") @db.Char(36)
+  date           DateTime @db.Date
+  note           String?  @db.VarChar(500)
+  starred        Boolean  @default(false)
+  mood           String?  @db.VarChar(30)
+  togetherMoment Boolean  @default(false) @map("together_moment")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("diary_entries")
+}
+
+model PeaceRule {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  text      String      @db.VarChar(255)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  @@map("peace_rules")
+}
+
+model PeaceContent {
+  id        String      @id @default(uuid()) @db.Char(36)
+  code      String      @unique @db.VarChar(50)
+  title     String      @db.VarChar(120)
+  body      String      @db.VarChar(600)
+  mode      ContentMode @default(NORMAL)
+  sortOrder Int         @default(0) @map("sort_order")
+  active    Boolean     @default(true)
+
+  @@map("peace_contents")
+}
+
+model PeaceEvent {
+  id              String   @id @default(uuid()) @db.Char(36)
+  coupleId        String   @map("couple_id") @db.Char(36)
+  userId          String   @map("user_id") @db.Char(36)
+  notifiedPartner Boolean  @default(false) @map("notified_partner")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId, createdAt])
+  @@map("peace_events")
+}
