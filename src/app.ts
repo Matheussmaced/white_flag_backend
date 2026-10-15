@@ -7,6 +7,7 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { env } from './config/env.js';
+import { parseCorsOrigins } from './config/cors.js';
 import './config/zod.js';
 import { prisma } from './lib/prisma.js';
 import { accountRoutes } from './modules/account/account.routes.js';
@@ -50,7 +51,7 @@ export async function buildApp() {
   if (env.DOCS_ENABLED) await registerSwagger(app);
 
   await app.register(helmet, { contentSecurityPolicy: env.DOCS_ENABLED ? false : undefined });
-  await app.register(cors, { origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(',') });
+  await app.register(cors, { origin: parseCorsOrigins(env.CORS_ORIGIN) });
 
   await app.register(authPlugin);
   await app.register(rateLimitPlugin);
