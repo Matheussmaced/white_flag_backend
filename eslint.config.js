@@ -12,4 +12,9 @@ export default tseslint.config(
       'no-console': 'error',
     },
   },
+  {
+    files: ['api/**/*.js'],
+    languageOptions: { globals: { console: 'readonly' } },
+    rules: { 'no-console': 'off' },
+  },
 );
