@@ -26,6 +26,7 @@ Fluxo: `routes -> controller -> service -> repository -> Prisma`. Cada camada so
 - Operacoes de escrita que o app pode reenviar (timeout) sao idempotentes via `Idempotency-Key` com unique no banco, como em `flags`.
 - Datas de calendario (sem hora) usam `@db.Date` e src/lib/date.ts; regras de hoje usam `APP_TIMEZONE`, com o relogio injetado no service para teste.
 - Catalogos entram por seed em `prisma/seed.ts` com upsert por `code`.
+- Seguranca e obrigatoria em toda tarefa (ver `docs/SECURITY.md`): escopo por token em toda consulta, sem IDOR, sem segredos em logs, e atualizar `docs/SECURITY.md` quando surgir um novo risco ou protecao.
 - Nunca retorne `passwordHash` nem hashes de token; o mapper expoe apenas campos publicos.
 
 ## Documentacao Swagger (obrigatoria)

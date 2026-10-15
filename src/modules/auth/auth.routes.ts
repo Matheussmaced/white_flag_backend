@@ -19,6 +19,7 @@ import {
   tokensResponseSchema,
 } from './auth.schema.js';
 import { AuthService } from './auth.service.js';
+import { createEmailThrottle } from './auth.throttle.js';
 import { PrismaPasswordResetsRepository } from './password-resets.repository.js';
 import { PrismaRefreshTokensRepository } from './refresh-tokens.repository.js';
 
@@ -43,6 +44,8 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
   const controller = new AuthController(authService);
+  const loginThrottle = createEmailThrottle(app, { max: 10, timeWindow: '15 minutes' });
+  const forgotPasswordThrottle = createEmailThrottle(app, { max: 3, timeWindow: '1 hour' });
 
   app.post(
     '/register',
@@ -67,11 +70,12 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/login',
     {
       config: { rateLimit },
+      preValidation: [loginThrottle],
       schema: {
         tags: ['auth'],
         summary: 'Entrar com e-mail e senha',
         description:
-          'Autentica o usuário e devolve os dados do perfil e o par de tokens (acesso e renovação). Por segurança, e-mail inexistente e senha incorreta retornam a mesma mensagem de erro 401.',
+          'Autentica o usuário e devolve os dados do perfil e o par de tokens (acesso e renovação). Por segurança, e-mail inexistente e senha incorreta retornam a mesma mensagem de erro 401. Além do limite por IP, há um limite de 10 tentativas a cada 15 minutos por e-mail, que protege contra adivinhação de senha mesmo vinda de vários IPs.',
         body: loginBodySchema,
         response: {
           200: authResponseSchema.meta({ description: 'Sessão autenticada' }),
@@ -124,11 +128,12 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/forgot-password',
     {
       config: { rateLimit },
+      preValidation: [forgotPasswordThrottle],
       schema: {
         tags: ['auth'],
         summary: 'Solicitar recuperação de senha',
         description:
-          'Envia ao e-mail informado um token para redefinir a senha, caso a conta exista. Sempre retorna 204, exista a conta ou não, para não revelar quais e-mails estão cadastrados.',
+          'Envia ao e-mail informado um token para redefinir a senha, caso a conta exista. Sempre retorna 204, exista a conta ou não, para não revelar quais e-mails estão cadastrados. Limitado a 3 solicitações por hora por e-mail, para impedir o envio em massa de mensagens a terceiros.',
         body: forgotPasswordBodySchema,
         response: {
           204: z.null().meta({ description: 'Solicitação aceita' }),

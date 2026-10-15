@@ -1,51 +1,53 @@
 {
-    "dependencies":  {
-                         "@fastify/cors":  "^11.3.1",
-                         "@fastify/helmet":  "^13.2.0",
-                         "@fastify/jwt":  "^10.2.4",
-                         "@fastify/rate-limit":  "^11.2.1",
-                         "@fastify/swagger":  "^9.9.2",
-                         "@fastify/swagger-ui":  "^6.1.2",
-                         "@prisma/client":  "^6.19.3",
-                         "argon2":  "^0.45.1",
-                         "dotenv":  "^18.0.8",
-                         "fastify":  "^5.12.7",
-                         "fastify-plugin":  "^6.0.1",
-                         "fastify-type-provider-zod":  "^7.0.0",
-                         "zod":  "^4.6.7"
-                     },
-    "devDependencies":  {
-                            "@eslint/js":  "^10.0.1",
-                            "@types/node":  "^26.6.5",
-                            "eslint":  "^10.12.0",
-                            "prettier":  "^3.9.10",
-                            "prisma":  "^6.19.3",
-                            "tsx":  "^4.23.15",
-                            "typescript":  "^6.0.3",
-                            "typescript-eslint":  "^8.71.2",
-                            "vitest":  "^5.0.4"
-                        },
-    "name":  "white-flag-back",
-    "version":  "0.1.0",
-    "private":  true,
-    "type":  "module",
-    "engines":  {
-                    "node":  "\u003e=22"
-                },
-    "scripts":  {
-                    "dev":  "tsx watch src/server.ts",
-                    "build":  "tsc -p tsconfig.build.json",
-                    "start":  "node dist/server.js",
-                    "typecheck":  "tsc --noEmit",
-                    "lint":  "eslint .",
-                    "format":  "prettier --write .",
-                    "test":  "vitest run",
-                    "test:watch":  "vitest",
-                    "prisma:generate":  "prisma generate",
-                    "prisma:migrate":  "prisma migrate dev",
-                    "prisma:deploy":  "prisma migrate deploy",
-                    "prisma:studio":  "prisma studio",
-                    "prisma:seed":  "tsx prisma/seed.ts",
-                    "docs:export":  "tsx scripts/export-openapi.ts"
-                }
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/jwt": "^10.2.4",
+    "@fastify/rate-limit": "^11.2.1",
+    "@fastify/swagger": "^9.9.2",
+    "@fastify/swagger-ui": "^6.1.2",
+    "@node-rs/argon2": "^2.2.2",
+    "@prisma/client": "^6.19.3",
+    "@vercel/functions": "^3.10.1",
+    "dotenv": "^18.0.8",
+    "fastify": "^5.12.7",
+    "fastify-plugin": "^6.0.1",
+    "fastify-type-provider-zod": "^7.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.10",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.4"
+  },
+  "name": "white-flag-back",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "docs:export": "tsx scripts/export-openapi.ts",
+    "vercel-build": "prisma generate && npm run build"
+  }
 }

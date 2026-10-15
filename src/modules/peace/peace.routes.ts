@@ -1,11 +1,9 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { createPushSender } from '../../lib/push-sender.js';
 import { prisma } from '../../lib/prisma.js';
 import { errorResponses } from '../../shared/http/error-response.js';
 import { PrismaCouplesRepository } from '../couples/couples.repository.js';
 import { CouplesService } from '../couples/couples.service.js';
-import { PrismaDevicesRepository } from '../devices/devices.repository.js';
-import { NotificationsService } from '../notifications/notifications.service.js';
+import { createNotificationsService } from '../notifications/notifications.factory.js';
 import { PrismaUsersRepository } from '../users/users.repository.js';
 import { UsersService } from '../users/users.service.js';
 import { PeaceController } from './peace.controller.js';
@@ -21,11 +19,7 @@ import { PeaceService } from './peace.service.js';
 export const peaceRoutes: FastifyPluginAsyncZod = async (app) => {
   const usersService = new UsersService(new PrismaUsersRepository(prisma));
   const couplesService = new CouplesService(new PrismaCouplesRepository(prisma), usersService);
-  const notificationsService = new NotificationsService(
-    new PrismaDevicesRepository(prisma),
-    createPushSender(app.log),
-    app.log,
-  );
+  const notificationsService = createNotificationsService(app);
   const peaceService = new PeaceService(
     new PrismaPeaceRepository(prisma),
     couplesService,

@@ -27,7 +27,7 @@ import { authPlugin } from './plugins/auth.js';
 import { rateLimitPlugin } from './plugins/rate-limit.js';
 import { registerJsonParser } from './plugins/json-parser.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
-import { registerSwagger } from './plugins/swagger.js';
+import { registerSwagger, registerSwaggerUi } from './plugins/swagger.js';
 
 const BODY_LIMIT_BYTES = 100 * 1024;
 
@@ -54,6 +54,8 @@ export async function buildApp() {
 
   await app.register(authPlugin);
   await app.register(rateLimitPlugin);
+
+  if (env.DOCS_ENABLED) await registerSwaggerUi(app);
 
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: '/auth' });

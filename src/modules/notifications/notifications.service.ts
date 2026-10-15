@@ -1,6 +1,8 @@
 import type { PushMessage, PushSender } from '../../lib/push-sender.js';
 import type { DevicesRepository } from '../devices/devices.repository.js';
 
+export type KeepAlive = (task: Promise<unknown>) => void;
+
 export interface NotificationLogger {
   error(context: object, message: string): void;
 }
@@ -45,6 +47,7 @@ export class NotificationsService {
     private readonly devicesRepository: DevicesRepository,
     private readonly pushSender: PushSender,
     private readonly logger: NotificationLogger,
+    private readonly keepAlive: KeepAlive = () => undefined,
   ) {}
 
   notifyFlagReceived(notification: FlagNotification): Promise<void> {
@@ -83,7 +86,15 @@ export class NotificationsService {
     });
   }
 
-  private async deliver(delivery: Delivery): Promise<void> {
+  private deliver(delivery: Delivery): Promise<void> {
+    const task = this.send(delivery);
+
+    this.keepAlive(task);
+
+    return task;
+  }
+
+  private async send(delivery: Delivery): Promise<void> {
     try {
       const tokens = await this.devicesRepository.findTokensByUserId(delivery.receiverId);
 

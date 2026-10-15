@@ -43,6 +43,10 @@ Rotas protegidas usam `onRequest: [app.authenticate]`, leem o usuario em `reques
 
 Todos os textos voltados ao cliente (Swagger e mensagens de erro) sao em portugues do Brasil; os `code` de erro ficam em ingles como contrato estavel. OpenAPI gerado dos schemas Zod, disponivel em `/docs` (UI) e `/docs/json`. Toda rota deve ter tags, summary, descricoes e exemplos nos campos, e declarar todos os erros possiveis com `errorResponses(...)`. Detalhes no agente `backend-architect`.
 
+## Seguranca
+
+Veja `docs/SECURITY.md`. Regras para novas tarefas: nunca consultar dados sem filtrar por usuario ou casal do token, nunca expor hashes, validar toda entrada, usar `perUserRateLimit` em rotas sensiveis e nunca logar tokens, senhas ou dados pessoais.
+
 ## Variaveis de ambiente
 
 Definidas em `.env` (nao versionado). Todo novo valor deve ser adicionado em `src/config/env.ts` e `.env.example`.

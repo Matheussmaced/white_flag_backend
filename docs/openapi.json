@@ -420,7 +420,7 @@
         "tags": [
           "auth"
         ],
-        "description": "Autentica o usuário e devolve os dados do perfil e o par de tokens (acesso e renovação). Por segurança, e-mail inexistente e senha incorreta retornam a mesma mensagem de erro 401.",
+        "description": "Autentica o usuário e devolve os dados do perfil e o par de tokens (acesso e renovação). Por segurança, e-mail inexistente e senha incorreta retornam a mesma mensagem de erro 401. Além do limite por IP, há um limite de 10 tentativas a cada 15 minutos por e-mail, que protege contra adivinhação de senha mesmo vinda de vários IPs.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1135,7 +1135,7 @@
         "tags": [
           "auth"
         ],
-        "description": "Envia ao e-mail informado um token para redefinir a senha, caso a conta exista. Sempre retorna 204, exista a conta ou não, para não revelar quais e-mails estão cadastrados.",
+        "description": "Envia ao e-mail informado um token para redefinir a senha, caso a conta exista. Sempre retorna 204, exista a conta ou não, para não revelar quais e-mails estão cadastrados. Limitado a 3 solicitações por hora por e-mail, para impedir o envio em massa de mensagens a terceiros.",
         "requestBody": {
           "required": true,
           "content": {

@@ -1,4 +1,4 @@
-import argon2 from 'argon2';
+import { hash, verify } from '@node-rs/argon2';
 
 export interface PasswordHasher {
   hash(password: string): Promise<string>;
@@ -7,10 +7,10 @@ export interface PasswordHasher {
 
 export class Argon2PasswordHasher implements PasswordHasher {
   hash(password: string) {
-    return argon2.hash(password);
+    return hash(password);
   }
 
-  verify(hash: string, password: string) {
-    return argon2.verify(hash, password);
+  verify(hashedPassword: string, password: string) {
+    return verify(hashedPassword, password);
   }
 }

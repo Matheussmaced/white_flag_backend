@@ -2,6 +2,8 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import type { FastifyInstance } from 'fastify';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
+import { env } from '../config/env.js';
+import { createDocsAuthHook } from './docs-auth.js';
 
 export const API_TAGS = [
   { name: 'health', description: 'Verificação de disponibilidade do serviço' },
@@ -44,9 +46,21 @@ export async function registerSwagger(app: FastifyInstance) {
     },
     transform: jsonSchemaTransform,
   });
+}
+
+export async function registerSwaggerUi(app: FastifyInstance) {
+  const protectedByPassword = env.DOCS_PASSWORD !== undefined && env.DOCS_PASSWORD !== '';
 
   await app.register(swaggerUi, {
     routePrefix: '/docs',
     uiConfig: { docExpansion: 'list', persistAuthorization: true },
+    ...(protectedByPassword && {
+      uiHooks: {
+        onRequest: createDocsAuthHook({
+          username: env.DOCS_USERNAME,
+          password: env.DOCS_PASSWORD ?? '',
+        }),
+      },
+    }),
   });
 }

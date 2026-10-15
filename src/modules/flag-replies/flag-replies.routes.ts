@@ -1,15 +1,13 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { createPushSender } from '../../lib/push-sender.js';
 import { prisma } from '../../lib/prisma.js';
 import { errorResponses } from '../../shared/http/error-response.js';
 import { PrismaCatalogsRepository } from '../catalogs/catalogs.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { PrismaCouplesRepository } from '../couples/couples.repository.js';
 import { CouplesService } from '../couples/couples.service.js';
-import { PrismaDevicesRepository } from '../devices/devices.repository.js';
 import { PrismaFlagsRepository } from '../flags/flags.repository.js';
 import { flagIdParamsSchema, flagResponseSchema } from '../flags/flags.schema.js';
-import { NotificationsService } from '../notifications/notifications.service.js';
+import { createNotificationsService } from '../notifications/notifications.factory.js';
 import { PrismaUsersRepository } from '../users/users.repository.js';
 import { UsersService } from '../users/users.service.js';
 import { FlagRepliesController } from './flag-replies.controller.js';
@@ -20,11 +18,7 @@ import { FlagRepliesService } from './flag-replies.service.js';
 export const flagRepliesRoutes: FastifyPluginAsyncZod = async (app) => {
   const usersService = new UsersService(new PrismaUsersRepository(prisma));
   const couplesService = new CouplesService(new PrismaCouplesRepository(prisma), usersService);
-  const notificationsService = new NotificationsService(
-    new PrismaDevicesRepository(prisma),
-    createPushSender(app.log),
-    app.log,
-  );
+  const notificationsService = createNotificationsService(app);
   const flagRepliesService = new FlagRepliesService(
     new PrismaFlagRepliesRepository(prisma),
     new PrismaFlagsRepository(prisma),

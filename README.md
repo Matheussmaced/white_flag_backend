@@ -104,12 +104,35 @@ As bandeiras sao idempotentes: o app envia um `Idempotency-Key` por bandeira e p
 
 Em desenvolvimento, o token de recuperacao de senha e escrito no log do servidor. O envio real de email ainda nao esta integrado (interface `Mailer` em `src/lib/mailer.ts`).
 
+## Deploy na Vercel
+
+A API roda como funcao serverless: `api/index.js` carrega a aplicacao compilada em `dist` e `vercel.json` encaminha todas as rotas para ela. O build (`npm run vercel-build`) gera o client do Prisma (inclusive o engine Linux) e compila o TypeScript. A pasta `public` existe so para satisfazer o build; a rota `/` mostra uma pagina simples.
+
+Variaveis de ambiente obrigatorias no painel da Vercel (ela nao le o `.env` local):
+
+| Variavel          | Valor                                                                             |
+| ----------------- | --------------------------------------------------------------------------------- |
+| NODE_ENV          | production                                                                        |
+| DATABASE_URL      | URL do MySQL com a senha codificada; sugestao: terminar com `?connection_limit=5` |
+| JWT_ACCESS_SECRET | segredo aleatorio (nao use valores de exemplo)                                    |
+| CORS_ORIGIN       | origens do app, separadas por virgula (nunca `*`)                                 |
+| TRUST_PROXY       | true                                                                              |
+| DOCS_ENABLED      | false, ou true com `DOCS_PASSWORD` de ao menos 12 caracteres                      |
+| APP_TIMEZONE      | America/Sao_Paulo                                                                 |
+| PUSH_ENABLED      | true quando o app tiver tokens de push reais                                      |
+
+Limitacoes do serverless: o rate limit fica em memoria por instancia (use Redis para protecao real), a Vercel nao tem IP fixo (o MySQL precisa aceitar conexoes de qualquer host) e o envio de push roda em segundo plano com `waitUntil` para nao ser interrompido apos a resposta.
+
+## Seguranca
+
+O resumo das protecoes, a configuracao obrigatoria em producao e os riscos conhecidos estao em `docs/SECURITY.md`. Em especial: a documentacao (`/docs`) pode ser protegida por senha com `DOCS_USERNAME` e `DOCS_PASSWORD`, e em producao a aplicacao so inicia com `CORS_ORIGIN` restrito, segredo JWT forte e (se o Swagger estiver ligado) `DOCS_PASSWORD` de ao menos 12 caracteres.
+
 ## Presenca, exclusao de conta e seguranca
 
 - Presenca: o app chama `POST /presence/ping` ao abrir e periodicamente. O par enxerga `online` e `lastSeenAt` em `GET /couple`; os textos ("online agora", "visto ha X min") sao montados no app.
 - Exclusao de conta (`DELETE /account`): remove perfil, sessoes, aparelhos, diario, bandeiras (inclusive as trocadas com o par, e suas respostas) e pazes. O vinculo do casal e desfeito e o par fica livre para formar outro. Exige a senha (403 `INVALID_PASSWORD` se incorreta). O access token ja emitido deixa de funcionar na pratica (as rotas passam a responder 404), pois o usuario nao existe mais.
 - Rate limit: 300 requisicoes por minuto por IP em todas as rotas, 10 por minuto nas rotas de autenticacao, e limites por usuario em envio de bandeira (60/min), ping de presenca (30/min), tentativas de pareamento (10 por 10 min) e exclusao de conta (5 por 10 min).
-- Producao: `CORS_ORIGIN` precisa listar as origens (a aplicacao nao inicia com `*`), use `TRUST_PROXY=true` atras de proxy, defina um `JWT_ACCESS_SECRET` forte e considere `DOCS_ENABLED=false`. O corpo das requisicoes e limitado a 100 KB e o cabecalho `Authorization` e removido dos logs.
+- Producao: `CORS_ORIGIN` precisa listar as origens (a aplicacao nao inicia com `*`), use `TRUST_PROXY=true` atras de proxy, defina um `JWT_ACCESS_SECRET` forte e considere `DOCS_ENABLED=false` (ou defina `DOCS_PASSWORD`). O corpo das requisicoes e limitado a 100 KB e o cabecalho `Authorization` e removido dos logs.
 - Paginacao: `GET /flags` e paginado; as demais listagens sao limitadas por natureza (catalogos fixos e diario de um ano, no maximo 366 registros).
 
 ## Documentacao da API (Swagger)

@@ -17,10 +17,14 @@ declare module 'fastify' {
   }
 }
 
+const JWT_ALGORITHM = 'HS256';
+const JWT_ISSUER = 'white-flag-api';
+
 export const authPlugin = fp(async (app: FastifyInstance) => {
   await app.register(jwt, {
     secret: env.JWT_ACCESS_SECRET,
-    sign: { expiresIn: env.ACCESS_TOKEN_TTL_SECONDS },
+    sign: { algorithm: JWT_ALGORITHM, iss: JWT_ISSUER, expiresIn: env.ACCESS_TOKEN_TTL_SECONDS },
+    verify: { algorithms: [JWT_ALGORITHM], allowedIss: JWT_ISSUER },
   });
 
   app.decorate('authenticate', async (request: FastifyRequest) => {
