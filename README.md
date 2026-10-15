@@ -121,6 +121,8 @@ Variaveis de ambiente obrigatorias no painel da Vercel (ela nao le o `.env` loca
 | APP_TIMEZONE      | America/Sao_Paulo                                                                 |
 | PUSH_ENABLED      | true quando o app tiver tokens de push reais                                      |
 
+Compatibilidade de Node: o `@fastify/swagger-ui` esta fixado em `5.2.3` de proposito. As versoes 6.x puxam o `@fastify/static` 10, que exige `require()` de modulo ESM (Node 22.12 ou superior) e derruba a funcao na Vercel com `ERR_REQUIRE_ESM`. Nao atualize sem testar em Node 20 e 22 antigos.
+
 Limitacoes do serverless: o rate limit fica em memoria por instancia (use Redis para protecao real), a Vercel nao tem IP fixo (o MySQL precisa aceitar conexoes de qualquer host) e o envio de push roda em segundo plano com `waitUntil` para nao ser interrompido apos a resposta.
 
 ## Seguranca
